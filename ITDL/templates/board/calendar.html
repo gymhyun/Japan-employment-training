@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center mb-4">일정 관리</h2>
+    <div id="calendar"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next dayGridMonth',
+            center: 'title',
+            right: 'today'
+        },
+        views: {
+            dayGridMonth: {
+                buttonText: 'month'
+            }
+        },
+        locale: 'ko',
+        selectable: true,
+        dateClick: function(info) {
+            window.location.href = `/todo/${info.dateStr}/`;
+        },
+        dayCellDidMount: function(arg) {
+            if (arg.date.getMonth() !== calendar.getDate().getMonth()) {
+                arg.el.style.backgroundColor = '#f8f9fa';
+            }
+        },
+        datesSet: function(info) {
+            const monthButton = document.querySelector('.fc-dayGridMonth-button');
+            if (monthButton && !monthButton.dataset.initialized) {
+                monthButton.dataset.initialized = 'true';
+                monthButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const dropdown = this.querySelector('.month-dropdown');
+                    
+                    if (!dropdown) {
+                        const newDropdown = document.createElement('div');
+                        newDropdown.className = 'month-dropdown';
+                        
+                        for (let i = 1; i <= 12; i++) {
+                            const item = document.createElement('div');
+                            item.className = 'month-item';
+                            item.textContent = `${i}월`;
+                            item.onclick = function(event) {
+                                event.stopPropagation();
+                                const newDate = new Date(calendar.getDate().getFullYear(), i - 1, 1);
+                                calendar.gotoDate(newDate);
+                                newDropdown.remove();
+                            };
+                            newDropdown.appendChild(item);
+                        }
+                        this.appendChild(newDropdown);
+                    } else {
+                        dropdown.remove();
+                    }
+                });
+            }
+        }
+    });
+    
+    calendar.render();
+    
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.fc-dayGridMonth-button')) {
+            const dropdown = document.querySelector('.month-dropdown');
+            if (dropdown) dropdown.remove();
+        }
+    });
+});
+</script>
+
+<style>
+.fc-day-today {
+    background-color: rgba(255, 220, 40, 0.15) !important;
+}
+
+.fc-toolbar-title {
+    font-size: 1.5em !important;
+    font-weight: bold;
+}
+
+.fc-dayGridMonth-button {
+    position: relative !important;
+}
+
+.month-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 1000;
+    min-width: 100px;
+    margin-top: 5px;
+}
+
+.month-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    white-space: nowrap;
+    color: #000;
+}
+
+.month-item:hover {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}
